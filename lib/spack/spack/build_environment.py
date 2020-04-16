@@ -51,6 +51,7 @@ import spack.build_systems.meson
 import spack.config
 import spack.main
 import spack.paths
+import spack.package
 import spack.schema.environment
 import spack.store
 import spack.util.path
@@ -834,7 +835,10 @@ def fork(pkg, function, dirty, fake, context='build', **kwargs):
 
             # build up some context from the offending package so we can
             # show that, too.
-            package_context = get_package_context(tb)
+            if exc_type is not spack.package.TestFailure:
+                package_context = get_package_context(tb)
+            else:
+                package_context = []
 
             build_log = None
             if context == 'build' and hasattr(pkg, 'log_path'):
@@ -931,7 +935,9 @@ def get_package_context(traceback, context=3):
             # Find the first proper subclass of PackageBase.
             obj = frame.f_locals['self']
             if isinstance(obj, spack.package.PackageBase):
-                break
+                if frame.f_code.co_name not in ('run_test',
+                                                '_run_test_helper'):
+                    break
 
     # Determine whether we are in a package file
     # Package files are named `package.py` and are not in the lib/spack/spack
@@ -1043,28 +1049,11 @@ class ChildError(InstallError):
         if (self.module, self.name) in ChildError.build_errors:
             # The error happened in some external executed process. Show
             # the log with errors or warnings highlighted.
-            def write_log_summary(log_type, log):
-                errors, warnings = parse_log_events(log)
-                nerr = len(errors)
-                nwar = len(warnings)
-                if nerr > 0:
-                    # If errors are found, only display errors
-                    out.write(
-                        "\n%s found in %s log:\n" %
-                        (plural(nerr, 'error'), log_type))
-                    out.write(make_log_context(errors))
-                elif nwar > 0:
-                    # If no errors are found but warnings are, display warnings
-                    out.write(
-                        "\n%s found in %s log:\n" %
-                        (plural(nwar, 'warning'), log_type))
-                    out.write(make_log_context(warnings))
-
             if self.build_log and os.path.exists(self.build_log):
-                write_log_summary('build', self.build_log)
+                write_log_summary(out, 'build', self.build_log)
 
             if self.test_log and os.path.exists(self.test_log):
-                write_log_summary('test', self.test_log)
+                write_log_summary(out, 'test', self.test_log)
 
         else:
             # The error happened in in the Python code, so try to show
@@ -1111,3 +1100,30 @@ def _make_child_error(msg, module, name, traceback, context,
     """Used by __reduce__ in ChildError to reconstruct pickled errors."""
     return ChildError(msg, module, name, traceback, context,
                       build_log, test_log)
+
+
+def write_log_summary(out, log_type, log, last=None):
+    errors, warnings = parse_log_events(log)
+    nerr = len(errors)
+    nwar = len(warnings)
+
+    if nerr > 0:
+        if last and nerr > last:
+            errors = errors[-last:]
+            nerr = last
+
+        # If errors are found, only display errors
+        out.write(
+            "\n%s found in %s log:\n" %
+            (plural(nerr, 'error'), log_type))
+        out.write(make_log_context(errors))
+    elif nwar > 0:
+        if last and nwar > last:
+            warnings = warnings[-last:]
+            nwar = last
+
+        # If no errors are found but warnings are, display warnings
+        out.write(
+            "\n%s found in %s log:\n" %
+            (plural(nwar, 'warning'), log_type))
+        out.write(make_log_context(warnings))
