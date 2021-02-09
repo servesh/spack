@@ -61,6 +61,8 @@ class Gdb(AutotoolsPackage, GNUMirrorPackage):
             '--with-system-gdbinit={0}'.format(self.prefix.etc.gdbinit)
         ]
 
+        args.append('--disable-nls')
+
         if '+python' in self.spec:
             args.append('--with-python')
             args.append('LDFLAGS={0}'.format(
