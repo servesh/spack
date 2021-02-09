@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -51,9 +51,13 @@ class Arm(spack.compiler.Compiler):
                 temp = match.group(1) + "." + match.group(2)
         return temp
 
-    @classmethod
-    def verbose_flag(cls):
+    @property
+    def verbose_flag(self):
         return "-v"
+
+    @property
+    def opt_flags(self):
+        return ['-O', '-O0', '-O1', '-O2', '-O3', '-Ofast']
 
     @property
     def openmp_flag(self):
@@ -80,7 +84,19 @@ class Arm(spack.compiler.Compiler):
         return "-std=c11"
 
     @property
-    def pic_flag(self):
+    def cc_pic_flag(self):
+        return "-fPIC"
+
+    @property
+    def cxx_pic_flag(self):
+        return "-fPIC"
+
+    @property
+    def f77_pic_flag(self):
+        return "-fPIC"
+
+    @property
+    def fc_pic_flag(self):
         return "-fPIC"
 
     required_libs = ['libclang', 'libflang']

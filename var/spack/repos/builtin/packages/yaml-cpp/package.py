@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -23,9 +23,7 @@ class YamlCpp(CMakePackage):
     version('0.3.0', sha256='ab8d0e07aa14f10224ed6682065569761f363ec44bc36fcdb2946f6d38fe5a89')
 
     variant('shared', default=True,
-            description='Enable build of shared libraries')
-    variant('static', default=False,
-            description='Build with static libraries')
+            description='Build shared instead of static libraries')
     variant('pic',   default=True,
             description='Build with position independent code')
     variant('tests', default=False,
@@ -35,9 +33,7 @@ class YamlCpp(CMakePackage):
 
     conflicts('%gcc@:4.7', when='@0.6.0:', msg="versions 0.6.0: require c++11 support")
     conflicts('%clang@:3.3.0', when='@0.6.0:', msg="versions 0.6.0: require c++11 support")
-    # currently we can't check for apple-clang's version
-    # conflicts('%clang@:4.0.0-apple', when='@0.6.0:',
-    # msg="versions 0.6.0: require c++11 support")
+    conflicts('%apple-clang@:4.0.0', when='@0.6.0:', msg="versions 0.6.0: require c++11 support")
     conflicts('%intel@:11.1', when='@0.6.0:', msg="versions 0.6.0: require c++11 support")
     conflicts('%xl@:13.1', when='@0.6.0:', msg="versions 0.6.0: require c++11 support")
     conflicts('%xl_r@:13.1', when='@0.6.0:', msg="versions 0.6.0: require c++11 support")
@@ -62,18 +58,13 @@ class YamlCpp(CMakePackage):
         return (flags, None, None)
 
     def cmake_args(self):
-        spec = self.spec
         options = []
 
         options.extend([
-            '-DBUILD_SHARED_LIBS:BOOL=%s' % (
-                'ON' if '+shared' in spec else 'OFF'),
-            '-DBUILD_STATIC_LIBS=%s' % (
-                'ON' if '+static' in spec else 'OFF'),
-            '-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=%s' % (
-                'ON' if '+pic' in spec else 'OFF'),
-            '-DYAML_CPP_BUILD_TESTS:BOOL=%s' % (
-                'ON' if '+tests' in spec else 'OFF'),
+            self.define_from_variant('BUILD_SHARED_LIBS', 'shared'),
+            self.define_from_variant('YAML_BUILD_SHARED_LIBS', 'shared'),
+            self.define_from_variant('CMAKE_POSITION_INDEPENDENT_CODE', 'pic'),
+            self.define_from_variant('YAML_CPP_BUILD_TESTS', 'tests'),
         ])
 
         return options

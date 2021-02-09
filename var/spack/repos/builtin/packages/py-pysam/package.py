@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -10,7 +10,7 @@ class PyPysam(PythonPackage):
     """A python module for reading, manipulating and writing genomic data
        sets."""
 
-    homepage = "https://pypi.python.org/pypi/pysam"
+    homepage = "https://github.com/pysam-developers/pysam"
     url      = "https://github.com/pysam-developers/pysam/archive/v0.14.1.tar.gz"
 
     version('0.15.2', sha256='8cb3dd70f0d825086ac059ec2445ebd2ec5f14af73e7f1f4bd358966aaee5ed3')
@@ -25,3 +25,6 @@ class PyPysam(PythonPackage):
     depends_on('samtools')
 
     depends_on('htslib@:1.6', when='@:0.13')
+
+    def setup_build_environment(self, env):
+        env.set('LDFLAGS', self.spec['curl'].libs.search_flags)

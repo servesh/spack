@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -13,7 +13,8 @@
 
 """
 import ctypes
-
+import collections
+from typing import List  # novm
 
 from ordereddict_backport import OrderedDict
 from six import string_types, StringIO
@@ -219,7 +220,7 @@ def file_line(mark):
 #: This is nasty but YAML doesn't give us many ways to pass arguments --
 #: yaml.dump() takes a class (not an instance) and instantiates the dumper
 #: itself, so we can't just pass an instance
-_annotations = []
+_annotations = []  # type: List[str]
 
 
 class LineAnnotationDumper(OrderedLineDumper):
@@ -321,7 +322,7 @@ def dump_annotated(data, stream=None, *args, **kwargs):
         stream = StringIO()
         getvalue = stream.getvalue
 
-    # write out annotations and linees, accounting for color
+    # write out annotations and lines, accounting for color
     width = max(clen(a) for a in _annotations)
     formats = ['%%-%ds  %%s\n' % (width + cextra(a)) for a in _annotations]
 
@@ -330,6 +331,22 @@ def dump_annotated(data, stream=None, *args, **kwargs):
 
     if getvalue:
         return getvalue()
+
+
+def sorted_dict(dict_like):
+    """Return an ordered dict with all the fields sorted recursively.
+
+    Args:
+        dict_like (dict): dictionary to be sorted
+
+    Returns:
+        dictionary sorted recursively
+    """
+    result = syaml_dict(sorted(dict_like.items()))
+    for key, value in result.items():
+        if isinstance(value, collections.Mapping):
+            result[key] = sorted_dict(value)
+    return result
 
 
 class SpackYAMLError(spack.error.SpackError):

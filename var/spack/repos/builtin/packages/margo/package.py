@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -28,7 +28,7 @@ class Margo(AutotoolsPackage):
     depends_on('pkgconfig', type='build')
 
     depends_on('mercury')
-    depends_on('argobots@1.0rc1:')
+    depends_on('argobots@1.0:')
 
     build_directory = 'spack-build'
 

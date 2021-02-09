@@ -1,7 +1,9 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
+
+import sys
 
 import llnl.util.tty as tty
 from llnl.util.tty.colify import colify
@@ -43,7 +45,9 @@ def dependencies(parser, args):
         spec = spack.cmd.disambiguate_spec(specs[0], env)
 
         format_string = '{name}{@version}{%compiler}{/hash:7}'
-        tty.msg("Dependencies of %s" % spec.format(format_string, color=True))
+        if sys.stdout.isatty():
+            tty.msg(
+                "Dependencies of %s" % spec.format(format_string, color=True))
         deps = spack.store.db.installed_relatives(
             spec, 'children', args.transitive, deptype=args.deptype)
         if deps:

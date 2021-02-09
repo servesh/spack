@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -18,6 +18,8 @@ class Lmbench(MakefilePackage):
     version('master', branch='master')
 
     depends_on('libtirpc')
+
+    patch('fix_results_path_for_aarch64.patch', sha256='2af57abc9058c56b6dd0697bb01a98902230bef92b117017e318faba148eef60', when='target=aarch64:')
 
     def setup_build_environment(self, env):
         env.prepend_path('CPATH', self.spec['libtirpc'].prefix.include.tirpc)

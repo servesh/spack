@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -14,9 +14,14 @@ class XorgPackage(spack.package.PackageBase):
     xorg_mirror_path = None
 
     #: List of x.org mirrors used by Spack
+    #  Note: x.org mirrors are a bit tricky, since many are out-of-sync or off.
+    #        A good package to test with is `util-macros`, which had a "recent"
+    #        release.
     base_mirrors = [
         'https://www.x.org/archive/individual/',
         'https://mirrors.ircam.fr/pub/x.org/individual/',
+        'https://mirror.transip.net/xorg/individual/',
+        'ftp://ftp.freedesktop.org/pub/xorg/individual/',
         'http://xorg.mirrors.pair.com/individual/'
     ]
 

@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -209,6 +209,7 @@ def test_find_format(database, config):
 
     output = find('--format', '{name}-{version}-{compiler.name}-{^mpi.name}',
                   'mpileaks')
+    assert "installed package" not in output
     assert set(output.strip().split('\n')) == set([
         "mpileaks-2.3-gcc-zmpi",
         "mpileaks-2.3-gcc-mpich",
@@ -324,7 +325,7 @@ def test_find_prefix_in_env(mutable_mock_env_path, install_mockery, mock_fetch,
 
 def test_find_loaded(database, working_env):
     output = find('--loaded', '--group')
-    assert output == ''  # 0 packages installed printed separately
+    assert output == ''
 
     os.environ[uenv.spack_loaded_hashes_var] = ':'.join(
         [x.dag_hash() for x in spack.store.db.query()])

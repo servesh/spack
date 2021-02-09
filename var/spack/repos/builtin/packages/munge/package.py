@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -9,7 +9,7 @@ import os
 
 class Munge(AutotoolsPackage):
     """ MUNGE Uid 'N' Gid Emporium """
-    homepage = "https://code.google.com/p/munge/"
+    homepage = "https://dun.github.io/munge/"
     url      = "https://github.com/dun/munge/releases/download/munge-0.5.14/munge-0.5.14.tar.xz"
     maintainers = ['ChristianTackeGSI']
 

@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -39,6 +39,7 @@ class Zoltan(AutotoolsPackage):
 
     depends_on('mpi', when='+mpi')
 
+    depends_on('parmetis@4: +int64', when='+parmetis+int64')
     depends_on('parmetis@4:', when='+parmetis')
     depends_on('metis+int64', when='+parmetis+int64')
     depends_on('metis', when='+parmetis')
@@ -90,12 +91,16 @@ class Zoltan(AutotoolsPackage):
             '-g' if '+debug' in spec else '',
         ]
 
+        config_ldflags = []
+        # PGI runtime libraries
+        if '%pgi' in spec:
+            config_ldflags.append('-pgf90libs')
         if '+shared' in spec:
             config_args.extend([
                 'RANLIB=echo',
                 '--with-ar=$(CXX) -shared $(LDFLAGS) -o'
             ])
-            config_cflags.append(self.compiler.pic_flag)
+            config_cflags.append(self.compiler.cc_pic_flag)
             if spec.satisfies('%gcc'):
                 config_args.append('--with-libs=-lgfortran')
             if spec.satisfies('%intel'):
@@ -133,13 +138,17 @@ class Zoltan(AutotoolsPackage):
                 '--with-mpi-libs= '
             ])
 
+        config_fcflags = config_cflags[:]
+        if spec.satisfies('%gcc@10:+fortran'):
+            config_fcflags.append('-fallow-argument-mismatch')
         # NOTE: Early versions of Zoltan come packaged with a few embedded
         # library packages (e.g. ParMETIS, Scotch), which messes with Spack's
         # ability to descend directly into the package's source directory.
         config_args.extend([
             '--with-cflags={0}'.format(' '.join(config_cflags)),
             '--with-cxxflags={0}'.format(' '.join(config_cflags)),
-            '--with-fcflags={0}'.format(' '.join(config_cflags))
+            '--with-fcflags={0}'.format(' '.join(config_fcflags)),
+            '--with-ldflags={0}'.format(' '.join(config_ldflags))
         ])
         return config_args
 

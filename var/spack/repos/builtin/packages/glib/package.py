@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -21,6 +21,12 @@ class Glib(Package):
     homepage = "https://developer.gnome.org/glib/"
     url      = "https://ftp.gnome.org/pub/gnome/sources/glib/2.53/glib-2.53.1.tar.xz"
 
+    version('2.66.2', sha256='ec390bed4e8dd0f89e918f385e8d4cfd7470b1ef7c1ce93ec5c4fc6e3c6a17c4')
+    version('2.64.6', sha256='c36ee07a70164c71f046016fe6aaacd6368333c42590bc0cba47c344ffb853f1')
+    version('2.64.5', sha256='9cbd5bd2715ead1c28d53c46f7b7b6ff6166f5887b772c1a9e3bf2910cfecc11')
+    version('2.64.4', sha256='f7e0b325b272281f0462e0f7fff25a833820cac19911ff677251daf6d87bce50')
+    version('2.64.3', sha256='fe9cbc97925d14c804935f067a3ad77ef55c0bbe9befe68962318f5a767ceb22')
+    version('2.64.2', sha256='9a2f21ed8f13b9303399de13a0252b7cbcede593d26971378ec6cb90e87f2277')
     version('2.64.1', sha256='17967603bcb44b6dbaac47988d80c29a3d28519210b28157c2bd10997595bbc7')
     version('2.62.6', sha256='104fa26fbefae8024ff898330c671ec23ad075c1c0bce45c325c6d5657d58b9c')
     version('2.60.7', sha256='8b12c0af569afd3b71200556ad751bad4cf4bf7bc4b5f880638459a42ca86310')
@@ -54,6 +60,7 @@ class Glib(Package):
     depends_on('perl', type=('build', 'run'))
     depends_on('python', type=('build', 'run'), when='@2.53.4:')
     depends_on('pcre+utf', when='@2.48:')
+    depends_on('uuid', when='+libmount')
     depends_on('util-linux', when='+libmount')
     depends_on('iconv')
 
@@ -69,12 +76,17 @@ class Glib(Package):
 
     # glib prefers the libc version of gettext, which breaks the build if the
     # external version is also found.
-    patch('meson-gettext.patch', when='@2.58.0:')
+    patch('meson-gettext.patch', when='@2.58:2.64')
+    patch('meson-gettext-2.66.patch', when='@2.66:')
 
     def url_for_version(self, version):
         """Handle glib's version-based custom URLs."""
         url = 'http://ftp.gnome.org/pub/gnome/sources/glib'
         return url + '/%s/glib-%s.tar.xz' % (version.up_to(2), version)
+
+    @property
+    def libs(self):
+        return find_libraries(['libglib*'], root=self.prefix, recursive=True)
 
     def meson_args(self):
         args = ['-Dgettext=external']
@@ -139,10 +151,18 @@ class Glib(Package):
             args.append('--with-libiconv=maybe')
         else:
             args.append('--with-libiconv=gnu')
-        if 'tracing=dtrace' in self.spec or 'tracing=systemtap' in self.spec:
-            args.append('--enable-tracing')
+        if self.spec.satisfies('@2.56:'):
+            for value in ('dtrace', 'systemtap'):
+                if ('tracing=' + value) in self.spec:
+                    args.append('--enable-' + value)
+                else:
+                    args.append('--disable-' + value)
         else:
-            args.append('--disable-tracing')
+            if ('tracing=dtrace' in self.spec
+                    or 'tracing=systemtap' in self.spec):
+                args.append('--enable-tracing')
+            else:
+                args.append('--disable-tracing')
         # SELinux is not available in Spack, so glib should not use it.
         args.append('--disable-selinux')
         # glib should not use the globally installed gtk-doc. Otherwise,
@@ -241,6 +261,8 @@ class Glib(Package):
         if spec.satisfies('@2:2.99'):
             pattern = 'Libs:'
             repl = 'Libs: -L{0} -Wl,-rpath={0} '.format(
-                   spec['gettext'].prefix.lib)
-            myfile = join_path(self.prefix.lib.pkgconfig, 'glib-2.0.pc')
+                   spec['gettext'].libs.directories[0])
+            myfile = join_path(
+                self.spec['glib'].libs.directories[0],
+                'pkgconfig', 'glib-2.0.pc')
             filter_file(pattern, repl, myfile, backup=False)

@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -22,6 +22,11 @@ class Ddd(AutotoolsPackage, GNUMirrorPackage):
 
     depends_on('gdb@4.16:')
     depends_on('lesstif@0.89:')
+
+    # Patch to fix hangs due to injection of bogus GDB init settings:
+    #     https://savannah.gnu.org/bugs/index.php?58191
+    patch('https://savannah.gnu.org/bugs/download.php?file_id=48852',
+          sha256='8faf986f1dbe529c377f8683deaa8dc2b3b08fe7c297214c9e03860d5c4a1aab')
 
     # Needed for OSX 10.9 DP6 build failure:
     #     https://savannah.gnu.org/patch/?8178

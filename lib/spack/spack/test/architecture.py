@@ -1,5 +1,4 @@
-
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -13,10 +12,10 @@ import platform as py_platform
 import pytest
 
 import spack.architecture
+import spack.concretize
 from spack.spec import Spec
 from spack.platforms.cray import Cray
 from spack.platforms.linux import Linux
-from spack.platforms.bgq import Bgq
 from spack.platforms.darwin import Darwin
 
 
@@ -41,10 +40,8 @@ def test_dict_functions_for_architecture():
 
 def test_platform():
     output_platform_class = spack.architecture.real_platform()
-    if os.environ.get('CRAYPE_VERSION') is not None:
+    if os.path.exists('/opt/cray/pe'):
         my_platform_class = Cray()
-    elif os.path.exists('/bgsys'):
-        my_platform_class = Bgq()
     elif 'Linux' in py_platform.system():
         my_platform_class = Linux()
     elif 'Darwin' in py_platform.system():
@@ -177,8 +174,8 @@ def test_arch_spec_container_semantic(item, architecture_str):
     # Check mixed toolchains
     ('clang@8.0.0', 'broadwell', ''),
     ('clang@3.5', 'x86_64', '-march=x86-64 -mtune=generic'),
-    # Check clang compilers with 'apple' suffix
-    ('clang@9.1.0-apple', 'x86_64', '-march=x86-64')
+    # Check Apple's Clang compilers
+    ('apple-clang@9.1.0', 'x86_64', '-march=x86-64')
 ])
 @pytest.mark.filterwarnings("ignore:microarchitecture specific")
 def test_optimization_flags(
@@ -201,7 +198,7 @@ def test_optimization_flags(
      '-march=icelake-client -mtune=icelake-client'),
     # Check that the special case for Apple's clang is treated correctly
     # i.e. it won't try to detect the version again
-    (spack.spec.CompilerSpec('clang@9.1.0-apple'), None, 'x86_64',
+    (spack.spec.CompilerSpec('apple-clang@9.1.0'), None, 'x86_64',
      '-march=x86-64'),
 ])
 def test_optimization_flags_with_custom_versions(
@@ -210,8 +207,8 @@ def test_optimization_flags_with_custom_versions(
     target = spack.architecture.Target(target_str)
     if real_version:
         monkeypatch.setattr(
-            spack.compiler.Compiler, 'cc_version', lambda x, y: real_version
-        )
+            spack.compiler.Compiler, 'get_real_version',
+            lambda x: real_version)
     opt_flags = target.optimization_flags(compiler)
     assert opt_flags == expected_flags
 
@@ -227,3 +224,29 @@ def test_satisfy_strict_constraint_when_not_concrete(
     architecture = spack.spec.ArchSpec(architecture_tuple)
     constraint = spack.spec.ArchSpec(constraint_tuple)
     assert not architecture.satisfies(constraint, strict=True)
+
+
+@pytest.mark.parametrize('root_target_range,dep_target_range,result', [
+    (('x86_64:nocona', 'x86_64:core2', 'nocona')),  # pref not in intersection
+    (('x86_64:core2', 'x86_64:nocona', 'nocona')),
+    (('x86_64:haswell', 'x86_64:mic_knl', 'core2')),  # pref in intersection
+    (('ivybridge', 'nocona:skylake', 'ivybridge')),  # one side concrete
+    (('haswell:icelake', 'broadwell', 'broadwell')),
+    # multiple ranges in lists with multiple overlaps
+    (('x86_64:nocona,haswell:broadwell', 'nocona:haswell,skylake:',
+      'nocona')),
+    # lists with concrete targets, lists compared to ranges
+    (('x86_64,haswell', 'core2:broadwell', 'haswell'))
+])
+@pytest.mark.usefixtures('mock_packages', 'config')
+def test_concretize_target_ranges(
+        root_target_range, dep_target_range, result
+):
+    # use foobar=bar to make the problem simpler for the old concretizer
+    # the new concretizer should not need that help
+    spec = Spec('a %%gcc@10 foobar=bar target=%s ^b target=%s' %
+                (root_target_range, dep_target_range))
+    with spack.concretize.disable_compiler_existence_check():
+        spec.concretize()
+
+    assert str(spec).count('arch=test-debian6-%s' % result) == 2

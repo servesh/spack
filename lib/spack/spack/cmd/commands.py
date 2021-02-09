@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -78,9 +78,10 @@ def setup_parser(subparser):
 class SpackArgparseRstWriter(ArgparseRstWriter):
     """RST writer tailored for spack documentation."""
 
-    def __init__(self, prog, out=sys.stdout, aliases=False,
+    def __init__(self, prog, out=None, aliases=False,
                  documented_commands=[],
                  rst_levels=['-', '-', '^', '~', ':', '`']):
+        out = sys.stdout if out is None else out
         super(SpackArgparseRstWriter, self).__init__(
             prog, out, aliases, rst_levels)
         self.documented = documented_commands

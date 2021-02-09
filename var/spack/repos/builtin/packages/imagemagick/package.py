@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Lawrence Livermore National Security, LLC and other
+# Copyright 2013-2021 Lawrence Livermore National Security, LLC and other
 # Spack Project Developers. See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: (Apache-2.0 OR MIT)
@@ -27,6 +27,7 @@ class Imagemagick(AutotoolsPackage):
     depends_on('libtiff')
     depends_on('ghostscript')
     depends_on('ghostscript-fonts')
+    depends_on('libsm')
 
     def configure_args(self):
         spec = self.spec
