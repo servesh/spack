@@ -55,7 +55,8 @@ class Mumps(Package):
     patch('gfortran8.patch', when='@5.1.2')
     # The following patches src/Makefile to fix some dependency
     # issues in lib[cdsz]mumps.so
-    patch('mumps.src-makefile.patch', when='+shared')
+    patch('mumps.src-makefile.5.2.patch', when='@5.2.0 +shared')
+    patch('mumps.src-makefile.5.3.patch', when='@5.3.0: +shared')
 
     def write_makefile_inc(self):
         if ('+parmetis' in self.spec or '+ptscotch' in self.spec) and (
@@ -79,6 +80,8 @@ class Mumps(Package):
         orderings = ['-Dpord']
         # All of the lib[cdsz]mumps.* libs depend on mumps_common
         extra_libs4mumps = ['-L$(topdir)/lib', '-lmumps_common']
+        # and mumps_common depends on pord
+        extra_libs4mumps += ['-L$(topdir)/PORD/lib', '-lpord']
 
         if '+ptscotch' in self.spec or '+scotch' in self.spec:
             makefile_conf.extend([
@@ -239,8 +242,8 @@ class Mumps(Package):
                 makefile_conf.extend([
                     'LIBEXT=.so',
                     'AR=link_cmd() { $(FL) -%s -Wl,-soname '
-                    '-Wl,%s/$(notdir $@) -o "$$@" %s; }; link_cmd ' %
-                    (build_shared_flag, prefix.lib, inject_libs),
+                    '-Wl,$(notdir $@) -o "$$@" %s; }; link_cmd ' %
+                    (build_shared_flag, inject_libs),
                     'RANLIB=ls'
                 ])
                 # When building libpord, read AR from Makefile.inc instead of

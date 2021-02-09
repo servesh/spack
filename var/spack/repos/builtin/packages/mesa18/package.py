@@ -21,7 +21,7 @@ class Mesa18(AutotoolsPackage):
     # whatever version of LLVM you're using.
     git      = "https://gitlab.freedesktop.org/mesa/mesa.git"
 
-    version('18.3.6', tag='mesa-18.3.6', preferred=True)
+    version('18.3.6', tag='mesa-18.3.6', preferred=True, deprecated=True)
 
     depends_on('autoconf', type='build')
     depends_on('automake', type='build')
@@ -185,7 +185,7 @@ class Mesa18(AutotoolsPackage):
         if libs_to_seek:
             return find_libraries(list(libs_to_seek),
                                   root=self.spec.prefix,
-                                  shared='+shared' in self.spec,
+                                  shared=True,
                                   recursive=True)
         return LibraryList()
 
@@ -193,19 +193,19 @@ class Mesa18(AutotoolsPackage):
     def osmesa_libs(self):
         return find_libraries('libOSMesa',
                               root=self.spec.prefix,
-                              shared='+shared' in self.spec,
+                              shared=True,
                               recursive=True)
 
     @property
     def glx_libs(self):
         return find_libraries('libGL',
                               root=self.spec.prefix,
-                              shared='+shared' in self.spec,
+                              shared=True,
                               recursive=True)
 
     @property
     def gl_libs(self):
         return find_libraries('libGL',
                               root=self.spec.prefix,
-                              shared='+shared' in self.spec,
+                              shared=True,
                               recursive=True)
